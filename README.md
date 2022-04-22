@@ -1,24 +1,10 @@
-# README
+gem 一覧
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+gem 'slim-rails'
+gem 'html2slim'
+gem 'bootstrap', '~> 4.1.1'
+gem 'rails_autolink'
 
-Things you may want to cover:
-
-* Ruby version
-
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+テスト
+gem 'rspec-rails', '~> 3.7'
+gem 'factory_bot_rails', '~> 4.11'

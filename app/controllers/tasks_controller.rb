@@ -3,21 +3,40 @@ class TasksController < ApplicationController
 
   def index
     # @tasks = Task.where(user_id: current_user.id) どっちもok!
-    @tasks = current_user.tasks.recent
+    # @tasks = current_user.tasks.recent
+    @q = current_user.tasks.ransack(params[:q])
+    @tasks = @q.result(distinct: true).page(params[:page])
+
+    respond_to do |format|
+      format.html
+      format.csv { send_data @tasks.generate_csv, filename: "tasks-#{Time.zone.now.strftime('%Y%m%d%S')}.csv" } 
+    end
   end
 
   def show
-    # @task = Task.find(params[:id])  他のユーザーみれんようにする！
-    
+    # @task = Task.find(params[:id]) 
   end
 
   def new
     @task = Task.new
   end
 
+  def confirm_new
+    @task = current_user.tasks.new(task_params)
+    render :new unless @task.valid?
+  end
+
   def create
     @task = current_user.tasks.new(task_params)
+
+    if params[:back].present?
+      render :new
+      return
+    end
+
     if @task.save
+      # logger.debug "task: #{@task.attributes.inspect}"
+      TaskMailer.creation_email(@task).deliver_now
       redirect_to @task, notice: "タスク「#{@task.name}」を登録しました。"
     else
       render :new
@@ -29,22 +48,26 @@ class TasksController < ApplicationController
   end
 
   def update
-    # task = Task.find(params[:id])
-    task.update!(task_params)
-    redirect_to tasks_url, notice: "タスク「#{task.name}」を更新しました。"
+    @task.update!(task_params)
+    redirect_to tasks_url, notice: "タスク「#{@task.name}」を更新しました。"
   end
 
   def destroy
     # task = Task.find(params[:id])
-    task.destroy
-    redirect_to tasks_url, notice: "タスク「#{task.name}」を削除しました。"
+    @task.destroy
+    redirect_to tasks_url, notice: "タスク「#{@task.name}」を削除しました。"
+  end
+
+  def import
+    current_user.tasks.import(params[:file])
+    redirect_to tasks_url, notice: "タスクを追加しました"
   end
 
 
   private
 
   def task_params
-    params.require(:task).permit(:name, :description)
+    params.require(:task).permit( :name, :description)
   end
 
   def set_task
